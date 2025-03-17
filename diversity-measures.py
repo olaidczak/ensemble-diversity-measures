@@ -231,3 +231,40 @@ def ia_measure(y, treshold, *args):
 
     K = 1 - sum(l * (L-l))/(pow(L,2)*N*(L-1)*p_hat*(1-p_hat))
     return K
+
+def generalized_diversity(y, treshold, *args):
+    """
+    Function computes the measure of generalized diversity for multiple classifiers
+    input: 
+          y : list of true class labels
+          treshold (float) : between 0 and 1, determines how to binarize the class probabilities output by the classifiers
+          *args : list of class probabilites for classifiers
+    output:
+          GD (float) : generalized diversity
+    """
+    L = len(args)
+    y = np.array(y)
+    N = y.size
+    y_bin = []
+    for elem in args:
+        y_bin.append(elem[:, 0] < treshold)
+    y_bin = np.array(y_bin)
+    
+    l = [] # l - number of clasiffiers that correctly recognized each row
+    for i in range(N):
+        tmp = 0
+        for j in range(L):
+            if y[i] == y_bin[j,i]:
+                tmp += 1
+        l.append(tmp)
+    l = np.array(l)
+    Y = 1 - l/L
+    values = np.array([i/L for i in range (L+1)])
+    counts = []
+    for elem in values:
+        counts.append(sum(Y == elem))
+    counts = np.array(counts)
+    tmp = np.array([0]+[i/(L-1) for i in range(L)])
+    p_1 = sum(values * counts/N)
+    p_2 = sum(values * counts/N * tmp)
+    return 1 - p_2/p_1
